@@ -3,7 +3,7 @@
     "description": "PowerShell starter workflow.",
     "iconName": "PowerShell",
     "categories": [
-        "PowerShell"
+        "Deployment"
     ],
     "filePatterns": [
         ".*\\.ps1$",
