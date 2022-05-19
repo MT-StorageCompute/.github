@@ -3,7 +3,7 @@ env:
   working_dir: <subdirector to monitor>
 # Controls when the workflow will run
 on:
-  # Triggers the workflow on push or pull request events but only for the specified branch and subdirectory
+  # triggers may change as pipeline is updated to rely more on ref head conditionals in later steps
   push:
     branches: [ dev ]
     paths:
@@ -24,6 +24,7 @@ jobs:
         with:
           patterns: "${working_dir}/"
 
+# run script should be reworked to accept a target directory as a parameter
       - name: Run Pester Tests
         run: |
-          pwsh -Command "${working_dir}/runtests.ps1"
+          pwsh -Command "${working_dir}/run-pester-tests.ps1"
