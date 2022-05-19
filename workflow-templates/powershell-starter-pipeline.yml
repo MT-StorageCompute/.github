@@ -1,27 +1,29 @@
-name: powershell-starter-workflow
-
+name: <descriptive job name>
 env: 
-  working_dir: "subdirectory-here"
+  working_dir: <subdirector to monitor>
 # Controls when the workflow will run
 on:
-  # Triggers the workflow on push or pull request events but only for the main branch
+  # Triggers the workflow on push or pull request events but only for the specified branch and subdirectory
   push:
     branches: [ dev ]
     paths:
-      - working_dir/*
+      - <subdirector to monitor>/**
 
 jobs:
-  Run Tests:
+  Run-Tests:
     # The type of runner that the job will run on
     runs-on: ubuntu-latest
 
     steps:
+      - name: testing
+        run: |
+          echo "${working_dir}"
+         
       - name: Sparse Checkout
         uses: gogaille/sparse-checkout@v0.1
         with:
-          patterns: working_dir/*
-    
+          patterns: "${working_dir}/"
+
       - name: Run Pester Tests
-        shell: pwsh
         run: |
-          $Results = Invoke-Pester working_dir/tests/ -PassThru
+          pwsh -Command "${working_dir}/runtests.ps1"
