@@ -1,0 +1,14 @@
+{
+    "name": "MT PowerShell",
+    "description": "PowerShell starter workflow.",
+    "iconName": "PowerShell",
+    "categories": [
+        "PowerShell"
+    ],
+    "filePatterns": [
+        ".*\\.ps1$",
+        ".*\\.psd1$",
+        ".*\\.psm1$",
+        ".*\\.json$"
+    ]
+}
