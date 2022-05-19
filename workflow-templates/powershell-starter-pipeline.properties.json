@@ -1,9 +1,9 @@
 {
-    "name": "MT PowerShell",
+    "name": "_POWERSHELL_",
     "description": "PowerShell starter workflow.",
     "iconName": "PowerShell",
     "categories": [
-        "PowerShell"
+        "Deployment"
     ],
     "filePatterns": [
         ".*\\.ps1$",
