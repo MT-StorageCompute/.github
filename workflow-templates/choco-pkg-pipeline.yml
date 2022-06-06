@@ -1,0 +1,56 @@
+# choco packaging steps
+# checkout
+# install chocolatey
+# add chocolatey to path
+# package
+# test install
+# test removal
+# publish if successful
+
+name: <package-name>
+env:
+  working_dir: <package-subdirectory>
+  package_name: <package-name>
+
+on:
+  push:
+    branches: [ dev, main ]
+
+jobs:
+  job1:
+    name: Package Testing
+    runs-on: self-hosted
+
+    steps:
+      - name: Sparse Checkout
+        uses: gogaille/sparse-checkout@v0.1
+        with:
+          patterns: "${working_dir}/"
+
+      - name: Install Chocolatey
+        run: |
+          Set-ExecutionPolicy Bypass -Scope Process -Force; iex ((New-Object System.Net.WebClient).DownloadString('http://brkchoco1:8081/repository/chocolatey-install/scripts/ChocolateyInstall.ps1'))
+      
+      - name: Add to PATH
+        run: $env:PATH += ";C:\ProgramData\chocolatey\bin"
+
+      - name: Refresh env
+        run: refreshenv
+
+      - name: Package
+        run: choco pack
+
+      - name: Test Install
+        run: choco install ${package_name} -s .
+
+      - name: Test Uninstall
+        run: choco uninstall ${package_name}
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v3.1.0
+        with:
+          name: choco_package
+          path: | 
+            ${{ github.workspace }}
+            **.nupkg
+          if-no-files-found: error

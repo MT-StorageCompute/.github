@@ -1,6 +1,6 @@
 {
-    "name": "_POWERSHELL_",
-    "description": "PowerShell starter workflow.",
+    "name": "Deploy PowerShell Scripts",
+    "description": "Run pester tests and deploy PowerShell scripts to on-prem resources.",
     "iconName": "PowerShell",
     "categories": [
         "Deployment"

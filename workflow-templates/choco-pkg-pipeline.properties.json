@@ -1,0 +1,15 @@
+{
+    "name": "Publish Chocolatey Packages",
+    "description": "Build and deploy chocolatey packages to internal Sonatype Nexus repository.",
+    "iconName": "NuGet",
+    "categories": [
+        "Deployment"
+    ],
+    "filePatterns": [
+        ".*\\.ps1$",
+        ".*\\.psd1$",
+        ".*\\.psm1$",
+        ".*\\.json$",
+        ".*\\.nuspec$"
+    ]
+}
