@@ -1,16 +1,7 @@
-# choco packaging steps
-# checkout
-# install chocolatey
-# add chocolatey to path
-# package
-# test install
-# test removal
-# publish if successful
-
 name: <package-name>
 env:
-  working_dir: <package-subdirectory>
-  package_name: <package-name>
+  WORKING_DIR: <package-directory>
+  PACKAGE_NAME: <package-name>
 
 on:
   push:
@@ -18,39 +9,89 @@ on:
 
 jobs:
   job1:
-    name: Package Testing
-    runs-on: windows-latest
+    name: Test Package
+    runs-on: self-hosted
 
     steps:
-      - name: Sparse Checkout
-        uses: gogaille/sparse-checkout@v0.1
-        with:
-          patterns: "${working_dir}/"
+      - name: Remove Existing .git
+        run: |
+          echo "Removing .git"
+          if (Test-Path -Path .git) {
+            Remove-Item -Path .git -Force -Recurse
+          }
+          
+      - name: Initialize Git Repo
+        run: |
+          echo "repo: ${{ github.repository }}"
+          git init --initial-branch=${{ github.ref_name }}
+          git remote add origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}
+
+      - name: Configure Sparse checkout
+        run: |
+          echo $env:PACKAGE_NAME
+          git sparse-checkout init --cone
+          git sparse-checkout set $env:PACKAGE_NAME
+
+      - name: Fetch Repo
+        run: |
+          echo "branch: ${{ github.ref_name }}"
+          git fetch
+          git checkout ${{ github.ref_name }}
+          gci
+          
+      - name: Retrieve MSI from Internal Source
+        # replace *.msi with the installer name or pattern that will get the latest version
+        run: |
+          Copy-Item -Path \\brksccmdata1.met.globaltti.net\apps\StorageCompute\choco_installers\$env:PACKAGE_NAME\*.msi -Destination .\$env:PACKAGE_NAME\tools\
 
       - name: Install Chocolatey
         run: |
-          Set-ExecutionPolicy Bypass -Scope Process -Force; iex ((New-Object System.Net.WebClient).DownloadString('http://brkchoco1:8081/repository/chocolatey-install/scripts/ChocolateyInstall.ps1'))
+          Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
       
       - name: Add to PATH
         run: $env:PATH += ";C:\ProgramData\chocolatey\bin"
 
       - name: Refresh env
         run: refreshenv
-
+        
       - name: Package
-        run: choco pack
+        run: |
+          $pkg_dir = Join-Path -Path (pwd).path -ChildPath $env:WORKING_DIR
+          Set-Location -Path $pkg_dir
+          choco pack
 
       - name: Test Install
-        run: choco install ${package_name} -s .
+        run: choco install $env:PACKAGE_NAME -s . -y
 
       - name: Test Uninstall
-        run: choco uninstall ${package_name}
-
+        run: choco uninstall $env:PACKAGE_NAME -y
+      
       - name: Upload Artifact
         uses: actions/upload-artifact@v3.1.0
         with:
-          name: choco_package
-          path: | 
-            ${{ github.workspace }}
-            **.nupkg
+          name: ${{ env.PACKAGE_NAME }}
+          path: |
+            ${{ github.workspace }}\${{ env.PACKAGE_NAME }}\*.nupkg
           if-no-files-found: error
+          
+  job2:
+    if: github.ref == 'refs/heads/main'
+    
+    name: Push Package to Nexus
+    needs: job1
+    runs-on: self-hosted
+    
+    steps:
+      - name: Download Artifact
+        uses: actions/download-artifact@v3.0.0
+        with:
+          name: ${{ env.PACKAGE_NAME }}
+          
+      - name: Set Up NuGet
+        uses: NuGet/setup-nuget@v1.0.6
+        
+      - name: Push Package to Nexus
+        run: |
+          nuget sources add -name Nexus -source  http://brkchoco1:8081/repository/chocolatey-hosted/ -username ${{ secrets.NEXUS_USER }} -password ${{ secrets.NEXUS_PASS }}
+          nuget setapikey ${{ secrets.NEXUS_API_KEY }} -source http://brkchoco1:8081/repository/chocolatey-hosted/
+          nuget push *.nupkg -Source http://brkchoco1:8081/repository/chocolatey-hosted/ -ApiKey ${{ secrets.NEXUS_API_KEY }}
