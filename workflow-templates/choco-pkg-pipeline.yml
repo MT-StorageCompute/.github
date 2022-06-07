@@ -6,6 +6,10 @@ env:
 on:
   push:
     branches: [ dev, main ]
+    paths:
+      - ${{ env.WORKING_DIR }}
+    paths-ignore:
+      - '**.md'
 
 jobs:
   job1:

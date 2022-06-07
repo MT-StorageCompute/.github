@@ -6,6 +6,10 @@ on:
   # triggers may change as pipeline is updated to rely more on ref head conditionals in later steps
   push:
     branches: [ dev, main ]
+    paths:
+      - ${{ env.WORKING_DIR }}
+    paths-ignore:
+      - '**.md'
     
 
 
